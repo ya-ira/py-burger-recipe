@@ -2,19 +2,19 @@ from abc import ABC, abstractmethod
 
 
 class Validator(ABC):
-    def __set_name__(self, owner: BurgerRecipe, name: str) -> None:
+    def __set_name__(self, owner: type, name: str) -> None:
         self.protected_name = "_" + name
 
-    def __get__(self, obj: BurgerRecipe,
-                obj_type: BurgerRecipe = None) -> int | tuple[str]:
+    def __get__(self, obj: object,
+                obj_type: type = None) -> int | tuple[str]:
         return getattr(obj, self.protected_name)
 
-    def __set__(self, obj: BurgerRecipe, value: int | tuple[str]) -> None:
-        if self.validate(value):
-            setattr(obj, self.protected_name, value)
+    def __set__(self, obj: object, value: int | tuple[str]) -> None:
+        self.validate(value)
+        setattr(obj, self.protected_name, value)
 
     @abstractmethod
-    def validate(self, value: int | tuple[str]) -> bool:
+    def validate(self, value: int | tuple[str]) -> None:
         pass
 
 
@@ -23,24 +23,22 @@ class Number(Validator):
         self.min_value = min_value
         self.max_value = max_value
 
-    def validate(self, value: int) -> bool:
+    def validate(self, value: int) -> None:
         if not isinstance(value, int):
             raise TypeError("Quantity should be integer.")
         if value < self.min_value or value > self.max_value:
             raise ValueError(f"Quantity should not be less than "
                              f"{self.min_value} and greater than "
                              f"{self.max_value}.")
-        return True
 
 
 class OneOf(Validator):
     def __init__(self, options: tuple[str]) -> None:
         self.options = options
 
-    def validate(self, value: str) -> bool:
+    def validate(self, value: str) -> None:
         if value not in self.options:
             raise ValueError(f"Expected {value} to be one of {self.options}.")
-        return True
 
 
 class BurgerRecipe:
